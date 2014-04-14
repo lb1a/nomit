@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<monit id="4e5402c4c2754f41485b929e27efbd5d" incarnation="1349390711" version="5.4">
+  <server>
+    <uptime>148</uptime>
+    <poll>60</poll>
+    <startdelay>0</startdelay>
+    <localhostname>centos63a</localhostname>
+    <controlfile>/etc/monit.conf</controlfile>
+    <httpd>
+      <address>localhost</address>
+      <port>2812</port>
+      <ssl>0</ssl>
+    </httpd>
+  </server>
+  <platform>
+    <name>Linux</name>
+    <release>2.6.32-279.el6.x86_64</release>
+    <version>#1 SMP Fri Jun 22 12:19:21 UTC 2012</version>
+    <machine>x86_64</machine>
+    <cpu>1</cpu>
+    <memory>1020696</memory>
+    <swap>262136</swap>
+  </platform>
+  <services>
+    <service name="system_localhost">
+      <type>5</type>
+      <collected_sec>1349390831</collected_sec>
+      <collected_usec>733638</collected_usec>
+      <status>0</status>
+      <status_hint>0</status_hint>
+      <monitor>1</monitor>
+      <monitormode>0</monitormode>
+      <pendingaction>0</pendingaction>
+    </service>
+    <service name="bin">
+      <type>1</type>
+      <collected_sec>1349390831</collected_sec>
+      <collected_usec>733654</collected_usec>
+      <status>0</status>
+      <status_hint>0</status_hint>
+      <monitor>1</monitor>
+      <monitormode>0</monitormode>
+      <pendingaction>0</pendingaction>
+    </service>
+  </services>
+  <servicegroups/>
+  <event>
+    <collected_sec>1349390859</collected_sec>
+    <collected_usec>878383</collected_usec>
+    <service>Monit</service>
+    <type>5</type>
+    <id>65536</id>
+    <state>2</state>
+    <action>3</action>
+    <message>Monit stopped</message>
+  </event>
+</monit>
