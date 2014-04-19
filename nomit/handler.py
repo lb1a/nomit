@@ -1,54 +1,31 @@
 """
-
+Base class for handling HTTP-POST request from Monit instances.
 
 """
 
-# TODO: M/Monit: error receiving data from http://localhost:2811/ -- Resource temporarily unavailable
-# TODO: Create Server class that the user is meant to derive from
+__author__ = "Markus Juenemann <markus@juenemann.net"
+__copyright__ = "Copyright (c) 2014 Markus Juenemann"
+__license__ = "Simplified BSD License" 
+__version__ = "1.0"
+__vcs_id__ = "$Id:"
+
 
 import socket
-import sys
 import BaseHTTPServer
-import SocketServer
-try:
-    import xml.etree.cElementTree as et
-except ImportError:
-    import xml.etree.ElementTree as et
-
-import nodes
-import handlers
+import lxml.objectify
+import constants
 
 
-# The different modes the server can operate in. By default the
-# server will handle POST requests sequentially.
-#
-THREADING = 1
-FORKING = 2
-
-
-# Node handlers are available as global variables so that 
-# `HttpPostHandler.do_POST` has access to them.
-#
-_RAW_HANDLER = None
-_MONIT_HANDLER = None
-_HTTPD_HANDLER = None
-_SERVER_HANDLER = None
-_PLATFORM_HANDLER = None
-_SERVICE_HANDLER = None
-_SERVICEGROUP_HANDLER = None
-_EVENT_HANDLER = None
-
-
-class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
-    pass
-
-class ForkingTCPServer(SocketServer.ForkingMixIn, SocketServer.TCPServer):
-    pass
-
-
-
-
-class HttpPostHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+class MonitXmlHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    
+    def version_string(self):
+        """
+        Return the version string of the HTTP server.
+        
+        """
+        
+        return "nomit/%s" % (__version__)
+    
     
     def finish(self,*args,**kw):
         """
@@ -76,116 +53,103 @@ class HttpPostHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         
         return
 
+
+    def handle_unparsed(self, data):
+        """
+        Handle the unparsed XML data.
+        
+        This method is meant to be overriden. The default implementation 
+        does nothing.
+        
+        :param data: Monit XML string.
+        
+        """
+        
+        pass
+        
+        
+
+
+    def handle_parsed(self, monit):
+        """
+        Handle the parsed XML data.
+        
+        This method is meant to be overriden. The default implementation 
+        does nothing.
+        
+        :param monit: Monit XML structure parsed by `lxml.objectify()`.
+        
+        """
+        
+        pass
+
     
     def do_POST(self):
         """
+        Process HTTP-POST request from Monit instance. 
         
         """
+        
+        # Send 200/OK and headers.
+        #
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        
         
         # Read all request data from client
         #
         data = self.rfile.read() 
 
-        # Send 200 OK and headers. This is fine with the client (Monit)
-        # but crashes here. We simply ignore that. TODO: does sending 200 still crash?
-        #
-        try:
-            self.send_response(200) 
-        except:
-            pass
-
 
         # Find the <monit>...</monit> section in the POST
         #
         try: 
-            start_pos = data.find("<monit")
+            #start_pos = data.find("<monit")
+            start_pos = data.find("<?xml")
             end_pos = data.find("</monit>")
-            xml = data[start_pos:end_pos+8]
+            xml = data[start_pos:end_pos+len("</monit>")]
         except IndexError:
             return
         
-        print data
         
-    
-        # Convert the XML into an Element
+        # Call the handler for unparsed XML
         #
-        element = et.fromstring(xml)
-        monit = nodes.Monit(element)
-        
-        
-        # Iterate through the nodes and call the handlers.
+        self.handle_unparsed(xml)
+
+    
+        # Parse XML into Python object hierarchy
         #
-        _RAW_HANDLER(data)
-        _MONIT_HANDLER(monit)
-        _SERVER_HANDLER(monit.server)
-        _HTTPD_HANDLER(monit.server.httpd)
-        _PLATFORM_HANDLER(monit.platform)
+        monit = lxml.objectify.fromstring(xml)
 
-        for servicegroup in monit.servicegroups:
-            _SERVICEGROUP_HANDLER(servicegroup)
+                
+        # Call the handler for parsed XML
+        #
+        self.handle_parsed(monit)
+        
 
-        for service in monit.services:
-            _SERVICE_HANDLER(service)
-            
-        for event in monit.events:
-            _EVENT_HANDLER(event)
-
-
-def run(address=("127.0.0.1", 2811), raw_handler=handlers._null_handler,
-        monit_handler=handlers._null_handler, httpd_handler=handlers._null_handler,
-        server_handler=handlers._null_handler, platform_handler=handlers._null_handler,
-        service_handler=handlers._null_handler, servicegroup_handler=handlers._null_handler,
-        event_handler=handlers._null_handler, mode=None):
+class _MonitDumpHandler(MonitXmlHandler):
     """
-    Listen on `address` for HTTP-POST from 'Monit' instances.
+    Dump the `monit` structure for debugging purposes.
     
-    """
+    """   
+        
+    def handle_unparsed(self, data):
+        print xml.dom.minidom.parseString(data).toprettyxml(indent="  ")
+        
     
-    # Register the event handlers for the nodes as global variables 
-    # so that `HttpPostHandler.do_POST` has access to them.
-    #
-    global _RAW_HANDLER
-    global _MONIT_HANDLER
-    global _HTTPD_HANDLER
-    global _SERVER_HANDLER
-    global _PLATFORM_HANDLER
-    global _SERVICE_HANDLER
-    global _SERVICEGROUP_HANDLER
-    global _EVENT_HANDLER
-    
-    _RAW_HANDLER = raw_handler
-    _MONIT_HANDLER = monit_handler
-    _HTTPD_HANDLER = httpd_handler
-    _SERVER_HANDLER = server_handler
-    _PLATFORM_HANDLER = platform_handler
-    _SERVICE_HANDLER = service_handler
-    _SERVICEGROUP_HANDLER = servicegroup_handler
-    _EVENT_HANDLER = event_handler
-    
-    
-    # Determine server mode
-    #
-    if mode == THREADING:
-        server = ThreadedTCPServer(address, HttpPostHandler)
-    elif mode == FORKING:
-        server = ForkingTCPServer(address, HttpPostHandler)
-    else:
-        server = SocketServer.TCPServer(address, HttpPostHandler)
-    
-    
-    # Run forevere
-    #
-    server.serve_forever()
-    
+    def handle_parsed(self, monit):
+        print lxml.objectify.dump(monit)
+        print "-" * 80
 
+#
+#
 if __name__ == "__main__":
-        
-    import handlers
     
-    run(raw_handler=handlers._debug_handler,
-        monit_handler=handlers._debug_handler,
-        server_handler=handlers._debug_handler,
-        platform_handler=handlers._debug_handler,
-        httpd_handler=handlers._debug_handler,
-        service_handler=handlers._debug_handler,
-        event_handler=handlers._debug_handler)
+    import SocketServer as socketserver
+    import BaseHTTPServer
+    import xml.dom.minidom
+    
+    #server = socketserver.TCPServer(("127.0.0.1", 2811), _MonitDumpHandler)
+    server = BaseHTTPServer.HTTPServer(("127.0.0.1", 2811), _MonitDumpHandler)
+    server.serve_forever()

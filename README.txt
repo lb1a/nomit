@@ -3,7 +3,7 @@ Nomit
 
 Nomit is a small library that can be used to process HTTP/XML POST
 requests from Monit_ instances. While it is a relatively trivial adaption
-of Python's `BaseHTTPRequestHandler_`, it may be useful to multiple 
+of Python's `BaseHTTPRequestHandler`_, it may be useful to multiple 
 other projects. For this reason Nomit is registered as its own little
 project.
 
@@ -21,7 +21,7 @@ The `MonitHandler` class
 ------------------------
 
 Nomit provides a single class `MonitHandler` which is a sub-class of
-`BaseHTTPRequestHandler_`. `MonitHandler` is meant to be sub-classed
+`BaseHTTPRequestHandler`_. `MonitHandler` is meant to be sub-classed
 itself. 
 
 It provides two methods:
@@ -63,12 +63,13 @@ MMonit server.
 
 ``monit.conf``:: 
 
-    set mmonit http://monit:monit@mmonit.example.com:8080/collector http://localhost:2811/
+    set mmonit http://monit:monit@mmonit.example.com:8080/collector 
+               http://localhost:2811/
   
   
 _[1] The ``set mmonit`` directive accepts multiple URLs.
 
 .. _Monit: http://mmonit.com/monit/
 .. _MMonit: http://mmonit.com/monit/#mmonit
-.. _BaseHTTPRequestHandler: https://docs.python.org/2/library/basehttpserver.html
+.. _`BaseHTTPRequestHandler`: https://docs.python.org/2/library/basehttpserver.html
 .. _lxml: http://lxml.de/

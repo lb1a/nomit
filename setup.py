@@ -1,4 +1,7 @@
 
+with open('README.txt') as f:
+    long_description = f.read()
+
 from distutils.core import setup
 setup(
     name = "nomit",
@@ -20,17 +23,5 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: System :: Monitoring",
         ],
-    long_description = """\
-Nomit is a small library that can be used to process HTTP/XML POST 
-requests from Monit* instances. While it is a relatively trivial adaption
-of Python's BaseHTTPRequestHandler, it may be useful to multiple 
-other projects. For this reason Nomit is registered as its own little
-project.
-
-*Monit (http://mmonit.com/monit/) is a free utility for managing Unix systems. 
-Multiple Monit instances can be centrally managed by its sister project 
-MMonit (http://mmonit.com/monit/#mmonit). Monit communicates with 
-MMonit through HTTP/XML POST request.
-
-"""
+    long_description = long_description
 )
