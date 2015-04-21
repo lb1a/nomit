@@ -14,6 +14,6 @@ __vcs_id__ = "$Id:"
 
 # Load other modules into this namespace
 #
-from handler import MonitBaseHandler 
+from handler import MonitXmlHandler
 from constants import *
 
