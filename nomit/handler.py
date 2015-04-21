@@ -89,14 +89,11 @@ class MonitXmlHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         Process HTTP-POST request from Monit instance. 
         
         """
-        
-        # Send 200/OK and headers.
-        #
-        self.send_response(200)
-        self.send_header("Content-type", "text/plain")
-        self.end_headers()
-        
-        
+
+        # Do not send any response or headers, since monit doesn't care anyway. It prevents the 'Broken pipe' errors
+        # because monit immediatly closes the connection and the response would be written to a closed socket/pipe.
+        # https://gist.github.com/lb1a/4279b84a1cab822d682f
+
         # Read all request data from client
         #
         data = self.rfile.read() 
